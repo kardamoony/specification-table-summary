@@ -1,14 +1,17 @@
-internal struct Settings
+using Newtonsoft.Json;
+
+public struct Settings
 {
-	public string dimensions_format;
-	public string diameter_format;
-	public string input_path_name;
-	public string output_path_name;
+	[JsonProperty("dimensions_format")] public string DimensionsFormat;
+	[JsonProperty("diameter_format")] public string DiameterFormat;
+	[JsonProperty("input_path")] public string InputPath;
+	[JsonProperty("output_path")] public string OutputPath;
 }
 
-internal struct Config
+public struct Config
 {
-	public Dictionary<string, List<string>> include_keys;
-	public List<string> exclude_keys;
-	public List<string> units; 
+	[JsonProperty("include_keys")] public Dictionary<string, List<string>> IncludeKeys;
+	[JsonProperty("exclude_keys")] public List<string> ExcludeKeys;
+	[JsonProperty("units_keys")] public List<string> UnitsKeys;
+	[JsonProperty("settings")] public Settings Settings; 
 }
