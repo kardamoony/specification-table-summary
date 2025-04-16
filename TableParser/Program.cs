@@ -1,48 +1,57 @@
 ﻿using Newtonsoft.Json;
 using OfficeOpenXml;
 using TableParser;
-using TableParser.ValueParsers;
+using TableParser.Data;
+using TableParser.Output;
+using TableParser.Parsers;
 
 internal class Program
 {
-	private static string CONFIG_PATH = Path.DirectorySeparatorChar + "config.json";
-	private const string SHEET_EXTENSION = ".xlsx";
-
+	private static string ConfigPath = "config.json";
+	private const string SheetExtension = ".xlsx";
 
 	private static void Main(string[] args)
 	{
-		if (!File.Exists(Environment.CurrentDirectory + CONFIG_PATH))
+		if (!File.Exists(ConfigPath))
 		{
-			throw new FileNotFoundException("Config file not found");
+			throw new FileNotFoundException("Config file not found: " + ConfigPath);
 		}
 
-		var configFile = File.ReadAllText(Environment.CurrentDirectory + Path.DirectorySeparatorChar + CONFIG_PATH);
+		//required for OfficeOpenXml package to work
+		ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+		var configFile = File.ReadAllText(ConfigPath);
 		var config = JsonConvert.DeserializeObject<Config>(configFile);
 
-		ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-		var workingDirectory = Environment.CurrentDirectory + Path.DirectorySeparatorChar + config.Settings.InputPath;
-		if (!Directory.Exists(workingDirectory)) 
+		var workingDirectory = config.Settings.InputPath;
+		if (!Directory.Exists(workingDirectory))
 		{
 			Directory.CreateDirectory(workingDirectory);
+			return;
 		}
-		
-		var files = Directory.GetFiles(workingDirectory);
-		var entries = new Dictionary<string, EntryDescription>();
 
 		var parser = new WorksheetParser(new WorksheetParser.Ctx
 		{
 			IncludeKeys = config.IncludeKeys,
 			ExcludeKeys = config.ExcludeKeys,
 			UnitsKeys = config.UnitsKeys,
-			DimensionsParser = new DimensionsParser(),
-			DiameterParser = new DiameterParser(),
+			DimensionsParser = new ValueParser<double, double>(config.Settings.DimensionsPatterns, double.Parse, double.Parse),
+			DiameterParser = new ValueParser<double>(config.Settings.DiameterPatterns, double.Parse),
 			DimensionsFormat = config.Settings.DimensionsFormat,
 			DiameterFormat = config.Settings.DiameterFormat,
 		});
 
-		foreach (var file in files)
+		var fileNames = new HashSet<string>();
+		var entries = new Dictionary<EntryKey, Dictionary<string, double>>();
+
+		foreach (var file in Directory.GetFiles(workingDirectory))
 		{
-			if (!file.EndsWith(SHEET_EXTENSION)) continue;
+			if (!file.EndsWith(SheetExtension)) continue;
+
+			var fileName = Path.GetFileNameWithoutExtension(file);
+			fileNames.Add(fileName);
+
+			var fileEntries = new Dictionary<EntryKey, EntryDescription>();
 
 			try
 			{
@@ -52,20 +61,30 @@ internal class Program
 
 				foreach (var worksheet in workbook.Worksheets)
 				{
-					parser.Parse(worksheet, ref entries);
+					parser.Parse(worksheet, fileName, ref fileEntries);
 				}
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
 			}
-			
+
+			foreach (var (key, entry) in fileEntries)
+			{
+				if (!entries.TryGetValue(key, out var counts))
+				{
+					counts = new Dictionary<string, double>();
+					entries.Add(key, counts);
+				}
+
+				counts.Add(fileName, entry.Count);
+			}
 		}
 
-		var writer = new OutputWriter(config.Settings.OutputPath);
-		writer.Write(entries.Values);
+		var writer = new FilesToCsvWriter(config.Settings.OutputPath, "summary-");
+		writer.Write(fileNames, entries);
 
-		//Console.WriteLine(workingDirectory);
+		Console.WriteLine("Done!");
 		//Console.ReadKey();
 	}
 }

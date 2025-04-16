@@ -1,10 +1,12 @@
 using OfficeOpenXml;
+using TableParser.Data;
 
-namespace TableParser
+namespace TableParser.Parsers
 {
 	public class WorksheetParser
 	{
-		public struct Ctx 
+		private const string DefaultDescription = "[Undefined]";
+		public struct Ctx
 		{
 			public IReadOnlyDictionary<string, List<string>> IncludeKeys;
 			public IEnumerable<string> ExcludeKeys;
@@ -24,21 +26,23 @@ namespace TableParser
 			_units = new (ctx.UnitsKeys);
 		}
 
-		public void Parse(ExcelWorksheet worksheet, ref Dictionary<string, EntryDescription> entries)
+		public void Parse(ExcelWorksheet worksheet, string fileName, ref Dictionary<EntryKey, EntryDescription> entries)
 		{
 			var start = worksheet.Dimension.Start;
 			var end = worksheet.Dimension.End;
 
 			for (var row = start.Row; row <= end.Row; row++)
 			{
-				if (!TryExtractEntry(worksheet, row, out var entry))
+				if (!TryExtractEntry(worksheet, fileName, row, out var entry))
 				{
 					continue;
 				}
 
-				if (!entries.TryGetValue(entry.Name, out var existingEntry))
+				var key = new EntryKey(entry.Name, entry.Description);
+
+				if (!entries.TryGetValue(key, out var existingEntry))
 				{
-					entries.Add(entry.Name, entry);
+					entries.Add(key, entry);
 					continue;
 				}
 
@@ -46,11 +50,12 @@ namespace TableParser
 			}
 		}
 
-		private bool TryExtractEntry(ExcelWorksheet worksheet, int rowIdx, out EntryDescription entry)
+		private bool TryExtractEntry(ExcelWorksheet worksheet, string fileName, int rowIdx, out EntryDescription entry)
 		{
-			var matchId = string.Empty;;
+			var nameCellText = string.Empty;
+			var name = string.Empty;
 			var unit = string.Empty;
-			var suffix = string.Empty;
+			var description = DefaultDescription;
 			double count = 0;
 
 			var isMatch = false;
@@ -85,30 +90,32 @@ namespace TableParser
 
 				if (IsIncludeValue(cellText, out var id))
 				{
+					nameCellText = cellText;
 					isMatch = true;
-					matchId = id;
+					name = id;
 
 					if (_ctx.DimensionsParser.TryParse(cellText, out var data))
 					{
-						suffix = string.Format(_ctx.DimensionsFormat, data.Item1, data.Item2);
+						description = string.Format(_ctx.DimensionsFormat, data.Item1, data.Item2);
 					}
 					else if (_ctx.DiameterParser.TryParse(cellText, out var d))
 					{
-						suffix = string.Format(_ctx.DiameterFormat, d);
+						description = string.Format(_ctx.DiameterFormat, d);
 					}
 				}
 			}
 
 			if (isMatch)
 			{
-				if (string.IsNullOrEmpty(suffix))
+				if (description.Equals(DefaultDescription))
 				{
-					suffix = "[unsorted]";
+					Console.WriteLine($"Failed to parse description for [{nameCellText}] at {fileName}, row {rowIdx}");
 				}
 
 				entry = new EntryDescription
 				{
-					Name = matchId + " " + suffix,
+					Name = name,
+					Description = description,
 					Unit = unit,
 					Count = count,
 				};

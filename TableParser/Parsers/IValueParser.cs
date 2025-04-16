@@ -1,4 +1,4 @@
-namespace TableParser
+namespace TableParser.Parsers
 {
 	public interface IValueParser<T>
 	{
