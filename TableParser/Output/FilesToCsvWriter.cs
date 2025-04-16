@@ -23,7 +23,7 @@ namespace TableParser.Output
 
 			using var writer = new StreamWriter(GetFilePath());
 			var stringBuilder = new StringBuilder();
-			stringBuilder.Append(",Всего");
+			stringBuilder.Append("Наименование,Габариты,Всего");
 
 			foreach (var fileName in fileNames)
 			{
@@ -38,11 +38,15 @@ namespace TableParser.Output
 
 				var countsByFile = entries[key];
 
-				stringBuilder.Append($"{key.ToString()},{counts[key]}");
+				stringBuilder.Append($"{key.Name},{key.Description},{counts[key]}");
 				foreach (var fileName in fileNames)
 				{
-					countsByFile.TryGetValue(fileName, out var count);
-					stringBuilder.Append($",{count}");
+					var countText = "-";
+					if (countsByFile.TryGetValue(fileName, out var count))
+					{
+						countText = count.ToString();
+					}
+					stringBuilder.Append($",{countText}");
 				}
 				
 				writer.WriteLine(stringBuilder.ToString());

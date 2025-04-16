@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using OfficeOpenXml;
-using TableParser;
 using TableParser.Data;
 using TableParser.Output;
 using TableParser.Parsers;
+
+//TODO: write error message if couldn't find UNIT
+//TODO: support multiple files for 1 object
 
 internal class Program
 {

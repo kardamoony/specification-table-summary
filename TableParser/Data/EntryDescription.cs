@@ -10,23 +10,23 @@ namespace TableParser.Data
 
 	public struct EntryKey
 	{
-		private readonly string _name;
-		private readonly string _description;
+		public readonly string Name;
+		public readonly string Description;
 
 		public EntryKey(string name, string description)
 		{
-			_name = name;
-			_description = description;
+			Name = name;
+			Description = description;
 		}
 
 		public override int GetHashCode()
 		{
-			return _name.GetHashCode() ^ _description.GetHashCode();
+			return Name.GetHashCode() ^ Description.GetHashCode();
 		}
 
 		public override string ToString()
 		{
-			return $"{_name} {_description}";
+			return $"{Name} {Description}";
 		}
 	}
 }
