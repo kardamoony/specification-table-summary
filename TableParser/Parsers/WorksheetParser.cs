@@ -106,21 +106,26 @@ namespace TableParser.Parsers
 			}
 
 			if (isMatch)
-			{
-				if (description.Equals(DefaultDescription))
 				{
-					Console.WriteLine($"Failed to parse description for [{nameCellText}] at {fileName}, row {rowIdx}");
-				}
+					if (description.Equals(DefaultDescription))
+					{
+						Console.WriteLine($"Failed to parse description for [{nameCellText}] at {fileName}, row {rowIdx}");
+					}
 
-				entry = new EntryDescription
-				{
-					Name = name,
-					Description = description,
-					Unit = unit,
-					Count = count,
-				};
-				return true;
-			}
+					if (count < double.Epsilon)
+					{
+						Console.WriteLine($"Failed to parse count for [{nameCellText}] at {fileName}, row {rowIdx}");
+					}
+
+					entry = new EntryDescription
+					{
+						Name = name,
+						Description = description,
+						Unit = unit,
+						Count = count,
+					};
+					return true;
+				}
 
 			entry = default;
 			return false;
