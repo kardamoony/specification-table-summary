@@ -21,7 +21,7 @@ namespace TableParser.Output
 
 			var orderedDescendingKeys = counts.Keys.OrderByDescending(key => counts[key]);
 
-			using var writer = new StreamWriter(GetFilePath());
+			using var writer = new StreamWriter(GetFilePath(), false, Encoding.UTF8);
 			var stringBuilder = new StringBuilder();
 			stringBuilder.Append("Наименование,Габариты,Всего");
 

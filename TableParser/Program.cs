@@ -26,6 +26,8 @@ internal class Program
 		var parsingLogic = new ParsingLogic(new ParsingLogic.Ctx{Config = config});
 		var parsed = parsingLogic.Parse();
 
+		if (parsed.Entries.Count < 1) return;
+
 		var outputPath = Path.Combine(AppContext.BaseDirectory, config.Settings.OutputPath);
 		var writer = new FilesToCsvWriter(outputPath, "summary-");
 		writer.Write(parsed.Groups, parsed.Entries);

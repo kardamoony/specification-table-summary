@@ -69,6 +69,12 @@ namespace TableParser.Parsers
 				var cell = worksheet.Cells[rowIdx, col];
 				var cellText = cell.Text?.ToLowerInvariant().Trim();
 
+				if (IsExcludeValue(cellText))
+				{
+					entry = default;
+					return false;
+				}
+
 				if (extractCount)
 				{
 					extractCount = false;
@@ -83,9 +89,12 @@ namespace TableParser.Parsers
 					continue;
 				}
 
-				if (IsExcludeValue(cellText))
+				if (isMatch && description.Equals(DefaultDescription))
 				{
-					continue;
+					if (TryParseDescription(cellText, out var descr))
+					{
+						description = descr;
+					}
 				}
 
 				if (IsIncludeValue(cellText, out var id))
@@ -94,13 +103,9 @@ namespace TableParser.Parsers
 					isMatch = true;
 					name = id;
 
-					if (_ctx.DimensionsParser.TryParse(cellText, out var data))
+					if (TryParseDescription(cellText, out var descr))
 					{
-						description = string.Format(_ctx.DimensionsFormat, data.Item1, data.Item2);
-					}
-					else if (_ctx.DiameterParser.TryParse(cellText, out var d))
-					{
-						description = string.Format(_ctx.DiameterFormat, d);
+						description = descr;
 					}
 				}
 			}
@@ -131,6 +136,24 @@ namespace TableParser.Parsers
 			return false;
 		}
 
+		private bool TryParseDescription(string value, out string description)
+		{
+			if (_ctx.DimensionsParser.TryParse(value, out var data))
+			{
+				description = string.Format(_ctx.DimensionsFormat, data.Item1, data.Item2);
+				return true;
+			}
+
+			if (_ctx.DiameterParser.TryParse(value, out var d))
+			{
+				description = string.Format(_ctx.DiameterFormat, d);
+				return true;
+			}
+
+			description = string.Empty;
+			return false;
+		}
+
 		private bool IsIncludeValue(string value, out string id)
 		{
 			id = string.Empty;
@@ -140,7 +163,7 @@ namespace TableParser.Parsers
 			{
 				foreach (var key in pair.Value)
 				{
-					if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase)) 
+					if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase))
 					{
 						id = pair.Key;
 						return true;
