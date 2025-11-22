@@ -11,6 +11,7 @@ namespace TableParser
 		public struct Ctx
 		{
 			public Config Config;
+			public IWorksheetParser Parser;
 		}
 
 		public struct Output
@@ -20,7 +21,7 @@ namespace TableParser
 		}
 
 		private readonly Ctx _ctx;
-		private readonly WorksheetParser _worksheetParser;
+		private readonly IWorksheetParser _worksheetParser;
 		private readonly Dictionary<EntryKey, Dictionary<string, double>> _entries;
 		private readonly HashSet<string> _groups;
 		private readonly string _workingDirectory;
@@ -31,17 +32,7 @@ namespace TableParser
 			_entries = new ();
 			_groups = new ();
 
-			_worksheetParser = new WorksheetParser(new WorksheetParser.Ctx
-			{
-				IncludeKeys = _ctx.Config.IncludeKeys,
-				ExcludeKeys = _ctx.Config.ExcludeKeys,
-				UnitsKeys = _ctx.Config.UnitsKeys,
-				DimensionsParser = new ValueParser<double, double>(_ctx.Config.Settings.DimensionsPatterns, double.Parse, double.Parse),
-				DiameterParser = new ValueParser<double>(_ctx.Config.Settings.DiameterPatterns, double.Parse),
-				DimensionsFormat = _ctx.Config.Settings.DimensionsFormat,
-				DiameterFormat = _ctx.Config.Settings.DiameterFormat,
-			});
-
+			_worksheetParser = ctx.Parser;
 			_workingDirectory = Path.Combine(AppContext.BaseDirectory, _ctx.Config.Settings.InputPath);
 			if (!Directory.Exists(_workingDirectory))
 			{

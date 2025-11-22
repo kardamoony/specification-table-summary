@@ -3,27 +3,29 @@ using TableParser.Data;
 
 namespace TableParser.Parsers
 {
-	public class WorksheetParser
+	//used implicitly by Activator
+	public class WorksheetParser : IWorksheetParser
 	{
 		private const string DefaultDescription = "[Undefined]";
-		public struct Ctx
-		{
-			public IReadOnlyDictionary<string, List<string>> IncludeKeys;
-			public IEnumerable<string> ExcludeKeys;
-			public IEnumerable<string> UnitsKeys;
-			public IValueParser<double> DiameterParser;
-			public IValueParser<(double, double)> DimensionsParser;
-			public string DimensionsFormat;
-			public string DiameterFormat;
-		}
-
-		private readonly Ctx _ctx;
+		
+		private readonly IReadOnlyDictionary<string, List<string>> _includeKeys;
+		private readonly IEnumerable<string> _excludeKeys;
+		private readonly IValueParser<double> _diameterParser;
+		private readonly IValueParser<(double, double)> _dimensionsParser;
+		private readonly string _dimensionsFormat;
+		private readonly string _diameterFormat;
+		
 		private HashSet<string> _units;
-
-		public WorksheetParser(Ctx ctx)
+		
+		public WorksheetParser(Config config)
 		{
-			_ctx = ctx;
-			_units = new (ctx.UnitsKeys);
+			_units = new HashSet<string>(config.UnitsKeys);
+			_includeKeys = config.IncludeKeys;
+			_excludeKeys = config.ExcludeKeys;
+			_diameterParser = new ValueParser<double>(config.Settings.DiameterPatterns, double.Parse);
+			_dimensionsParser = new ValueParser<double, double>(config.Settings.DimensionsPatterns, double.Parse, double.Parse);
+			_diameterFormat = config.Settings.DiameterFormat;
+			_dimensionsFormat = config.Settings.DimensionsFormat;
 		}
 
 		public void Parse(ExcelWorksheet worksheet, string fileName, ref Dictionary<EntryKey, EntryDescription> entries)
@@ -111,26 +113,26 @@ namespace TableParser.Parsers
 			}
 
 			if (isMatch)
+			{
+				if (description.Equals(DefaultDescription))
 				{
-					if (description.Equals(DefaultDescription))
-					{
-						Console.WriteLine($"Failed to parse description for [{nameCellText}] at {fileName}, row {rowIdx}");
-					}
-
-					if (count < double.Epsilon)
-					{
-						Console.WriteLine($"Failed to parse count for [{nameCellText}] at {fileName}, row {rowIdx}");
-					}
-
-					entry = new EntryDescription
-					{
-						Name = name,
-						Description = description,
-						Unit = unit,
-						Count = count,
-					};
-					return true;
+					Console.WriteLine($"Failed to parse description for [{nameCellText}] at {fileName}, row {rowIdx}");
 				}
+
+				if (count < double.Epsilon)
+				{
+					Console.WriteLine($"Failed to parse count for [{nameCellText}] at {fileName}, row {rowIdx}");
+				}
+
+				entry = new EntryDescription
+				{
+					Name = name,
+					Description = description,
+					Unit = unit,
+					Count = count,
+				};
+				return true;
+			}
 
 			entry = default;
 			return false;
@@ -138,15 +140,15 @@ namespace TableParser.Parsers
 
 		private bool TryParseDescription(string value, out string description)
 		{
-			if (_ctx.DimensionsParser.TryParse(value, out var data))
+			if (_dimensionsParser.TryParse(value, out var data))
 			{
-				description = string.Format(_ctx.DimensionsFormat, data.Item1, data.Item2);
+				description = string.Format(_dimensionsFormat, data.Item1, data.Item2);
 				return true;
 			}
 
-			if (_ctx.DiameterParser.TryParse(value, out var d))
+			if (_diameterParser.TryParse(value, out var d))
 			{
-				description = string.Format(_ctx.DiameterFormat, d);
+				description = string.Format(_diameterFormat, d);
 				return true;
 			}
 
@@ -159,7 +161,7 @@ namespace TableParser.Parsers
 			id = string.Empty;
 			if (string.IsNullOrEmpty(value)) return false;
 
-			foreach (var pair in _ctx.IncludeKeys)
+			foreach (var pair in _includeKeys)
 			{
 				foreach (var key in pair.Value)
 				{
@@ -176,7 +178,7 @@ namespace TableParser.Parsers
 		private bool IsExcludeValue(string value)
 		{
 			if (string.IsNullOrEmpty(value)) return false;
-			foreach (var key in _ctx.ExcludeKeys)
+			foreach (var key in _excludeKeys)
 			{
 				if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase)) return true;
 			}

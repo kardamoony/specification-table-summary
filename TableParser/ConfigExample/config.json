@@ -40,5 +40,9 @@
     ],
     "input_path": "sheets",
     "output_path": "report"
+  },
+  "factory_config": {
+    "parser_type": "TableParser.Parsers.WorksheetParser",
+    "parser_name": "The First One"
   }
 }
