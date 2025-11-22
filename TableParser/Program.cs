@@ -8,7 +8,6 @@ internal class Program
 {
 	private static string ConfigPath = "config.json";
 	
-
 	private static void Main(string[] args)
 	{
 		var configPath = Path.Combine(AppContext.BaseDirectory, ConfigPath);

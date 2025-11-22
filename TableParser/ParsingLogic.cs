@@ -83,7 +83,7 @@ namespace TableParser
 			return new Output
 			{
 				Entries = new Dictionary<EntryKey, Dictionary<string, double>>(_entries),
-				Groups = [.. _groups],
+				Groups = _groups.ToList(),
 			};
 		}
 
