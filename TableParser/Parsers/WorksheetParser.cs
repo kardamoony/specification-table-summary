@@ -4,31 +4,24 @@ using TableParser.Data;
 namespace TableParser.Parsers
 {
 	//used implicitly by Activator
-	public class WorksheetParser : IWorksheetParser
+	public class WorksheetParser : BaseParser
 	{
 		private const string DefaultDescription = "[Undefined]";
 		
-		private readonly IReadOnlyDictionary<string, List<string>> _includeKeys;
-		private readonly IEnumerable<string> _excludeKeys;
 		private readonly IValueParser<double> _diameterParser;
 		private readonly IValueParser<(double, double)> _dimensionsParser;
 		private readonly string _dimensionsFormat;
 		private readonly string _diameterFormat;
 		
-		private HashSet<string> _units;
-		
-		public WorksheetParser(Config config)
+		public WorksheetParser(Config config) : base(config)
 		{
-			_units = new HashSet<string>(config.UnitsKeys);
-			_includeKeys = config.IncludeKeys;
-			_excludeKeys = config.ExcludeKeys;
 			_diameterParser = new ValueParser<double>(config.Settings.DiameterPatterns, double.Parse);
 			_dimensionsParser = new ValueParser<double, double>(config.Settings.DimensionsPatterns, double.Parse, double.Parse);
 			_diameterFormat = config.Settings.DiameterFormat;
 			_dimensionsFormat = config.Settings.DimensionsFormat;
 		}
 
-		public void Parse(ExcelWorksheet worksheet, string fileName, ref Dictionary<EntryKey, EntryDescription> entries)
+		public override void Parse(ExcelWorksheet worksheet, string fileName, ref Dictionary<EntryKey, EntryDescription> entries)
 		{
 			var start = worksheet.Dimension.Start;
 			var end = worksheet.Dimension.End;
@@ -156,39 +149,7 @@ namespace TableParser.Parsers
 			return false;
 		}
 
-		private bool IsIncludeValue(string value, out string id)
-		{
-			id = string.Empty;
-			if (string.IsNullOrEmpty(value)) return false;
-
-			foreach (var pair in _includeKeys)
-			{
-				foreach (var key in pair.Value)
-				{
-					if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase))
-					{
-						id = pair.Key;
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		private bool IsExcludeValue(string value)
-		{
-			if (string.IsNullOrEmpty(value)) return false;
-			foreach (var key in _excludeKeys)
-			{
-				if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase)) return true;
-			}
-			return false;
-		}
-
-		private bool IsUnit(string value)
-		{
-			return !string.IsNullOrEmpty(value) && _units.Contains(value);
-		}
+		
 	}
 }
 
