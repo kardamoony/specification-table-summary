@@ -88,7 +88,7 @@ public class AirductsParser : BaseParser
                 continue;
             }
             
-            if (IsExcludeValue(cellText))
+            if (IsExcludeValueSplit(cellText))
             {
                 parsedData = default;
                 return false;
@@ -101,7 +101,7 @@ public class AirductsParser : BaseParser
                 continue;
             }
 
-            if (IsIncludeValue(cellText, out var e))
+            if (IsIncludeValueSplit(cellText, out var e))
             {
                 entryName = e;
 

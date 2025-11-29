@@ -64,6 +64,11 @@ namespace TableParser.Parsers
 				var cell = worksheet.Cells[rowIdx, col];
 				var cellText = cell.Text?.ToLowerInvariant().Trim();
 
+				if (string.IsNullOrEmpty(cellText))
+				{
+					continue;
+				}
+
 				if (IsExcludeValue(cellText))
 				{
 					entry = default;

@@ -23,6 +23,35 @@ public abstract class BaseParser : IWorksheetParser
         value = string.Empty;
         if (string.IsNullOrEmpty(cellText) || _includeKeys == null) return false;
 
+        foreach (var pair in _includeKeys)
+        {
+            foreach (var key in pair.Value)
+            {
+                if (cellText.Contains(key, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    value = pair.Key;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected bool IsExcludeValue(string value)
+    {
+        if (string.IsNullOrEmpty(value) || _excludeKeys == null) return false;
+        foreach (var key in _excludeKeys)
+        {
+            if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase)) return true;
+        }
+        return false;
+    }
+    
+    protected bool IsIncludeValueSplit(string cellText, out string value)
+    {
+        value = string.Empty;
+        if (string.IsNullOrEmpty(cellText) || _includeKeys == null) return false;
+
         var split = cellText.Split(' ', ',');
 
         foreach (var pair in _includeKeys)
@@ -43,7 +72,7 @@ public abstract class BaseParser : IWorksheetParser
         return false;
     }
 
-    protected bool IsExcludeValue(string value)
+    protected bool IsExcludeValueSplit(string value)
     {
         if (string.IsNullOrEmpty(value) || _excludeKeys == null) return false;
         var split = value.Split(' ', ',');
