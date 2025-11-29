@@ -23,26 +23,40 @@ public abstract class BaseParser : IWorksheetParser
         value = string.Empty;
         if (string.IsNullOrEmpty(cellText) || _includeKeys == null) return false;
 
+        var split = cellText.Split(' ', ',');
+
         foreach (var pair in _includeKeys)
         {
             foreach (var key in pair.Value)
             {
-                if (cellText.Contains(key, StringComparison.InvariantCultureIgnoreCase))
+                foreach (var token in split)
                 {
-                    value = pair.Key;
-                    return true;
+                    if (token.Equals(key, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        value = token;
+                        return true;
+                    }
                 }
             }
         }
+        
         return false;
     }
 
     protected bool IsExcludeValue(string value)
     {
         if (string.IsNullOrEmpty(value) || _excludeKeys == null) return false;
+        var split = value.Split(' ', ',');
+
         foreach (var key in _excludeKeys)
         {
-            if (value.Contains(key, StringComparison.InvariantCultureIgnoreCase)) return true;
+            foreach (var token in split)
+            {
+                if (token.Equals(key, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
         }
         return false;
     }

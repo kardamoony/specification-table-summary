@@ -15,6 +15,7 @@ namespace TableParser.Data
 	public struct FactoryConfig
 	{
 		[JsonProperty("parser_type")] public string ParserType;
+		[JsonProperty("output_type")] public string OutputType;
 		[JsonProperty("parser_name")] public string ParserName;
 	}
 

@@ -1,0 +1,38 @@
+{
+  "include_keys": {
+    "Воздуховод": [
+      "воздуховод"
+    ]
+  },
+  "exclude_keys": [],
+  "units_keys": [
+    "м.п.",
+    "м п",
+    "м"
+  ],
+  "settings": {
+    "dimensions_format": "{0}x{1}",
+    "dimensions_patterns": [
+      "(\\d+)\\s*[хХxX]\\s*(\\d+)",
+      "(\\d+)[xXхХ](\\d+)",
+      "-(\\d+)[xXхХ](\\d+)-"
+    ],
+    "diameter_format": "ø{0}",
+    "diameter_patterns": [
+      "[∅ø]\\s*(\\d+)",
+      "[Dd]\\s*=\\s*(\\d+)",
+      "[Dd]\\s*(\\d+)",
+      "\\s+(\\d+)\\s+",
+      "\\s+(\\d+)$",
+      "-(\\d+)-SVF",
+      "[Нн][Оо]-(\\d+)-"
+    ],
+    "input_path": "sheets",
+    "output_path": "report"
+  },
+  "factory_config": {
+    "parser_type": "TableParser.Parsers.AirductsParser",
+    "output_type": "TableParser.Output.AirductsOutputWriter",
+    "parser_name": "Воздуховоды (общая площадь)"
+  }
+}

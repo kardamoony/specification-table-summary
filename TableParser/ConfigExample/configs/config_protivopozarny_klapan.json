@@ -43,6 +43,7 @@
   },
   "factory_config": {
     "parser_type": "TableParser.Parsers.WorksheetParser",
-    "parser_name": "The First One"
+    "output_type": "TableParser.Parsers.WorksheetsToCsvWriter",
+    "parser_name": "Противопожарные клапаны (количество)"
   }
 }

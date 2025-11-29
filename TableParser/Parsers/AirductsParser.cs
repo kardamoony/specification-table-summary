@@ -5,8 +5,6 @@ namespace TableParser.Parsers;
 
 public class AirductsParser : BaseParser
 {
-    private const string UnitName = "м²";
-
     private struct ParsedRowData
     {
         public string CellText;
@@ -28,11 +26,13 @@ public class AirductsParser : BaseParser
     
     public override void Parse(ExcelWorksheet worksheet, string fileName, ref Dictionary<EntryKey, EntryDescription> entries)
     {
+        fileName = fileName.Replace(',', '_');
+        
         var start = worksheet.Dimension.Start;
         var end = worksheet.Dimension.End;
 
         double cumulativeArea = 0;
-        var needManualCheck = new List<(string data, int row)>();
+        var needManualCheck = new List<int>();
 
         for (var row = start.Row; row <= end.Row; row++)
         {
@@ -43,17 +43,34 @@ public class AirductsParser : BaseParser
 
             if (rowData.NeedManualCheck)
             {
-                needManualCheck.Add((rowData.CellText, rowData.Row));
+                needManualCheck.Add(rowData.Row);
                 continue;
             }
 
             cumulativeArea += rowData.Area;
         }
+
+        if (cumulativeArea > double.Epsilon)
+        {
+            var countedKey = new EntryKey(fileName, string.Empty);
+            var entry = new EntryDescription
+            {
+                Count = cumulativeArea,
+            };
+            entries.Add(countedKey, entry);
+        }
+
+        foreach (var row in needManualCheck)
+        {
+            var message = $" [undefined]: row={row}";
+            var key = new EntryKey(fileName, message);
+            entries.Add(key, new EntryDescription());
+        }
     }
 
     private bool TryProcessRow(ExcelWorksheet worksheet, int row, ExcelCellAddress start, ExcelCellAddress end, out ParsedRowData parsedData)
     {
-        string entryName = null;
+        string? entryName = null;
         double? length = null;
         
         double? diameter = null;
@@ -65,8 +82,13 @@ public class AirductsParser : BaseParser
         {
             var cell = worksheet.Cells[row, column];
             var cellText = cell.Text?.ToLowerInvariant().Trim();
+
+            if (string.IsNullOrEmpty(cellText))
+            {
+                continue;
+            }
             
-            if (cellText == null || IsExcludeValue(cellText))
+            if (IsExcludeValue(cellText))
             {
                 parsedData = default;
                 return false;
@@ -102,7 +124,7 @@ public class AirductsParser : BaseParser
             }
         }
 
-        if (entryName == null)
+        if (string.IsNullOrEmpty(entryName))
         {
             parsedData = default;
             return false;
@@ -112,7 +134,6 @@ public class AirductsParser : BaseParser
         {
             parsedData = new ParsedRowData
             {
-                CellText = entryName,
                 Row = row,
                 NeedManualCheck = true,
             };
@@ -147,11 +168,11 @@ public class AirductsParser : BaseParser
  
     private static double GetArea(double diameter, double length)
     {
-        return Math.PI * diameter * length;
+        return Math.PI * diameter * 0.001 * length;
     }
 
     private static double GetArea(double height, double width, double length)
     {
-        return (height + width) * 2 * length;
+        return (height + width) * 0.001 * 2 * length;
     }
 }

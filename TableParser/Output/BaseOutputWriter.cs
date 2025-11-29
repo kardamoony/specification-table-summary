@@ -1,12 +1,19 @@
 
+using TableParser.Data;
+
 namespace TableParser.Output
 {
+	public interface IOutputWriter
+	{
+		void Write(IEnumerable<string> fileNames, IReadOnlyDictionary<EntryKey, Dictionary<string, double>> entries);
+	}
+	
 	public abstract class BaseOutputWriter
 	{
 		protected readonly string OutputPath;
 		protected readonly string FileName;
 
-		public BaseOutputWriter(string outputPath, string fileName)
+		protected BaseOutputWriter(string outputPath, string fileName)
 		{
 			OutputPath = outputPath;
 			FileName = fileName;

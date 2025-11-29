@@ -3,9 +3,9 @@ using TableParser.Data;
 
 namespace TableParser.Output
 {
-	public class FilesToCsvWriter : BaseOutputWriter
+	public class WorksheetsToCsvWriter : BaseOutputWriter, IOutputWriter
 	{
-		public FilesToCsvWriter(string outputPath, string fileName) : base(outputPath, fileName)
+		public WorksheetsToCsvWriter(string outputPath, string fileName) : base(outputPath, fileName)
 		{
 		}
 
@@ -23,7 +23,7 @@ namespace TableParser.Output
 
 			using var writer = new StreamWriter(GetFilePath(), false, Encoding.UTF8);
 			var stringBuilder = new StringBuilder();
-			stringBuilder.Append("Наименование,Габариты,Всего");
+			stringBuilder.Append("Объект,Габариты,Всего");
 
 			foreach (var fileName in fileNames)
 			{

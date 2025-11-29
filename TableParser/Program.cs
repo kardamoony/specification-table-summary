@@ -2,8 +2,6 @@
 using OfficeOpenXml;
 using TableParser;
 using TableParser.Data;
-using TableParser.Output;
-using TableParser.Parsers;
 
 internal class Program
 {
@@ -56,7 +54,7 @@ internal class Program
 
 		if (!TryParseInput(input!, options, out var config, out var quitRequested))
 		{
-			Console.WriteLine("Ой! Я что-то нажала и всё исчезло!");
+			Console.WriteLine($"Unknown command: {input}");
 			return true;
 		}
 		
@@ -65,24 +63,28 @@ internal class Program
 			Console.WriteLine("Bye!");
 			return false;
 		}
-				
-		if (ParserFactory.TryGetParser(config, out var parser))
+
+		var hasParser = ComponentsFactory.TryGetParser(config, out var parser);
+		var hasWriter = ComponentsFactory.TryGetWriter(config, out var writer, "summary-");
+
+		if (hasParser && hasWriter)
 		{
 			var parsingLogic = new ParsingLogic(new ParsingLogic.Ctx
 			{
 				Config = config,
 				Parser = parser!
 			});
-
+			
 			var parsed = parsingLogic.Parse();
 			if (parsed.Entries.Count > 0)
 			{
-				var outputPath = Path.Combine(AppContext.BaseDirectory, config.Settings.OutputPath);
-				var writer = new FilesToCsvWriter(outputPath, "summary-");
-				writer.Write(parsed.Groups, parsed.Entries);
-
+				writer!.Write(parsed.Groups, parsed.Entries);
 				Console.WriteLine("\n--- Done! ---\n");
 			}
+		} 
+		else
+		{
+			Console.WriteLine($"Failed to create one of components. Has parser={hasParser}, has writer={hasWriter}");
 		}
 
 		return true;
